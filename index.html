@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>¡Alimentá a la lombriz!</title>
+  <style>
+    body { margin: 0; font-family: sans-serif; text-align: center; background: #f0f0d8; }
+    canvas { background: #b5e7a0; display: block; margin: 20px auto; border: 4px solid #5c832f; }
+    #score, #start, #game-over { font-size: 20px; margin-top: 10px; }
+    #start, #game-over { display: none; }
+    button { font-size: 18px; padding: 10px 20px; margin-top: 20px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>¡Alimentá a la lombriz!</h1>
+  <div id="start">
+    <p>Usá las flechas para mover la lombriz y comé sólo los residuos correctos.</p>
+    <button onclick="startGame()">Empezar</button>
+  </div>
+  <canvas id="game" width="400" height="400" style="display: none;"></canvas>
+  <div id="score">Puntos: 0</div>
+  <div id="game-over"></div>
+  <audio id="eat-sound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_4b0c662e82.mp3"></audio>
+  <audio id="bad-sound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_8f6aa2b56f.mp3"></audio>
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const startScreen = document.getElementById("start");
+    const gameOverScreen = document.getElementById("game-over");
+    const scoreDisplay = document.getElementById("score");
+    const eatSound = document.getElementById("eat-sound");
+    const badSound = document.getElementById("bad-sound");
+
+    let worm, score, food;
+    const wormSize = 20;
+    const goodFoods = ["banana", "hojas", "papel"];
+    const badFoods = ["carne", "plástico", "cítrico"];
+
+    function spawnFood() {
+      const items = [...goodFoods, ...badFoods];
+      const item = items[Math.floor(Math.random() * items.length)];
+      return {
+        x: Math.floor(Math.random() * 20) * wormSize,
+        y: Math.floor(Math.random() * 20) * wormSize,
+        type: item
+      };
+    }
+
+    function drawWorm() {
+      ctx.fillStyle = "brown";
+      ctx.fillRect(worm.x, worm.y, wormSize, wormSize);
+    }
+
+    function drawFood() {
+      ctx.fillStyle = goodFoods.includes(food.type) ? "green" : "red";
+      ctx.fillRect(food.x, food.y, wormSize, wormSize);
+    }
+
+    function updateScore() {
+      scoreDisplay.textContent = "Puntos: " + score;
+    }
+
+    function checkCollision() {
+      if (worm.x === food.x && worm.y === food.y) {
+        if (goodFoods.includes(food.type)) {
+          score += 10;
+          eatSound.play();
+        } else {
+          score -= 10;
+          badSound.play();
+        }
+        updateScore();
+        food = spawnFood();
+        if (score < -20) endGame();
+      }
+    }
+
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawWorm();
+      drawFood();
+      checkCollision();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function startGame() {
+      startScreen.style.display = "none";
+      canvas.style.display = "block";
+      gameOverScreen.style.display = "none";
+      worm = { x: 200, y: 200 };
+      score = 0;
+      food = spawnFood();
+      updateScore();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function endGame() {
+      canvas.style.display = "none";
+      gameOverScreen.innerHTML = `<p>¡Juego terminado!</p><p>Puntaje final: ${score}</p><button onclick='startGame()'>Jugar de nuevo</button>`;
+      gameOverScreen.style.display = "block";
+    }
+
+    document.addEventListener("keydown", (e) => {
+      const move = wormSize;
+      if (e.key === "ArrowUp") worm.y -= move;
+      if (e.key === "ArrowDown") worm.y += move;
+      if (e.key === "ArrowLeft") worm.x -= move;
+      if (e.key === "ArrowRight") worm.x += move;
+    });
+
+    startScreen.style.display = "block";
+  </script>
+</body>
+</html>
